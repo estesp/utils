@@ -1,6 +1,6 @@
 #!/bin/bash
 
-_runcBinary="/usr/local/bin/docker-runc-original"
+_runcBinary=$(which docker-runc-original)
 _argArray=( "$@" )
 _straceCmd="strace -f -s 1024 -v -o "
 
