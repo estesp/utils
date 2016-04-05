@@ -21,8 +21,8 @@ function contains() {
 }
 
 # if this is a request to start a container..
-contains "${_argArray[@]}" "start" && [ "${STRACE_RUNC}" -eq 1 ] && {
-  echo Executing strace for ID=${_ID} >>/tmp/runc.log
+contains "${_argArray[@]}" "start" && [ "${STRACE_RUNC}" == "1" ] && {
+echo $(date --rfc-3339=seconds) Executing strace for ID=${_ID} >>/tmp/runc.log
   _STRACE=1
 }
 
