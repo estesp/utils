@@ -80,5 +80,5 @@ for file in ${BINLIST}; do
 		}
 		rm -f ${INSTALL_PATH}/${file}
 		ln -s "${targetBin}" "${INSTALL_PATH}/${file}"
-}
+	} 
 done
