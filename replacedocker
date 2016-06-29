@@ -25,18 +25,18 @@ docker-containerd-ctr
 docker-containerd-shim"
 
 function findBin {
-  local fname="${1}"
-  local dir="binary-daemon"
-  [ "${fname}" == "docker" ] && {
-	  dir="binary-client"
-  }
-  [ -e "${BLDROOT}/bundles/${VERSION}/${dir}/${fname}" ] && {
-    echo "${BLDROOT}/bundles/${VERSION}/${dir}/${fname}"
-	return
-  }
-  [ -e "${INSTALL_PATH}/${fname}-${VERSION}" ] && {
-    echo "${INSTALL_PATH}/${fname}-${VERSION}"
-  }
+	local fname="${1}"
+	local dir="binary-daemon"
+	[ "${fname}" == "docker" ] && {
+		dir="binary-client"
+	}
+	[ -e "${BLDROOT}/bundles/${VERSION}/${dir}/${fname}" ] && {
+		echo "${BLDROOT}/bundles/${VERSION}/${dir}/${fname}"
+		return
+	}
+	[ -e "${INSTALL_PATH}/${fname}-${VERSION}" ] && {
+		echo "${INSTALL_PATH}/${fname}-${VERSION}"
+	}
 }
 
 if [[ $EUID -ne 0 ]]; then
@@ -53,7 +53,7 @@ for file in ${BINLIST}; do
 done
 
 [ -z "${VERSION}" ] && {
-    echo "Please provide a version number to replace in ${INSTALL_PATH}"
+	echo "Please provide a version number to replace in ${INSTALL_PATH}"
 	exit 1
 }
 
