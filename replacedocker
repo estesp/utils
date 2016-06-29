@@ -1,0 +1,84 @@
+#!/bin/bash
+# (c)2016 Phil Estes <estesp@gmail.com>
+
+# Modify BLDROOT and INSTALL_PATH to match locations where you
+# build and install docker binaries.  The rest of the script
+# should work once those are correct.
+
+BLDROOT="/home/estesp/repos/estesp/docker"
+INSTALL_PATH="/usr/bin"
+
+# This script will symlink the docker binaries in INSTALL_PATH
+# to the version-appended versions also placed at that path
+# This script is not destructive and will only replace symlinks;
+# if actual files are found at the INSTALL_PATH the script will
+# exit until they are copied away to version-appended copies and
+# replaced with symlinks.
+
+VERSION="${1}"
+# docker 1.12 and above binary list (adds dockerd and docker split)
+BINLIST="dockerd
+docker
+docker-runc
+docker-containerd
+docker-containerd-ctr
+docker-containerd-shim"
+
+function findBin {
+  local fname="${1}"
+  local dir="binary-daemon"
+  [ "${fname}" == "docker" ] && {
+	  dir="binary-client"
+  }
+  [ -e "${BLDROOT}/bundles/${VERSION}/${dir}/${fname}" ] && {
+    echo "${BLDROOT}/bundles/${VERSION}/${dir}/${fname}"
+	return
+  }
+  [ -e "${INSTALL_PATH}/${fname}-${VERSION}" ] && {
+    echo "${INSTALL_PATH}/${fname}-${VERSION}"
+  }
+}
+
+if [[ $EUID -ne 0 ]]; then
+	echo "This script must be run as root"
+	exit 1
+fi
+# first make sure that all of the binaries are symlinks--this way we don't
+# perform any destructive replace when we copy in new binaries
+for file in ${BINLIST}; do
+	[ -f "${file}" ] && [ ! -L "${file}" ] && {
+		echo "File ($file) exists and is not a symlink; refusing to replace"
+		exit 1
+	}
+done
+
+[ -z "${VERSION}" ] && {
+    echo "Please provide a version number to replace in ${INSTALL_PATH}"
+	exit 1
+}
+
+# TODO: An Ubuntu-ism; maybe not portable
+echo "Stopping Docker daemon (if running)"
+service docker stop
+
+echo "Attempting to replace all docker binaries in ${INSTALL_PATH} with version ${1}"
+# prefer "fresh" built binaries over /usr/bin contents (bundles dir)
+# but allow symlink to existing binaries (e.g. GA releases) already in
+# /usr/bin
+for file in ${BINLIST}; do
+	target=$( findBin "${file}" )
+	[ -z "${target}" ] && {
+		echo "WARNING: Can't find target for ${file}; not removing current symlink"
+	} || {
+		echo "  Using ${file} from ${target}"
+		targetBin="${INSTALL_PATH}/${file}-${VERSION}"
+		# if we are going to use a built binary, copy it to /usr/bin first with
+		# the version appended
+		srcPath="${target:0:${#BLDROOT}}"
+		[ -z "${srcPath#$BLDROOT}" ] && {
+			cp "${target}" "${targetBin}"
+		}
+		rm -f ${INSTALL_PATH}/${file}
+		ln -s "${targetBin}" "${INSTALL_PATH}/${file}"
+}
+done
